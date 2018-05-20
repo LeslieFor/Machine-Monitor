@@ -101,19 +101,15 @@ static void *sys_info_run(void *arg)
 		get_cpu_info(&sys_info->cpu);
 		sleep(1);
 	}
+
+    return NULL;
 }
 
 
 
-int demo(sys_info_t **sys_info)
+int sys_demo(sys_info_t *sys_info)
 {
-	*sys_info = new_sys_info();
-	if (*sys_info == NULL)
-	{
-		return -1;
-	}
-
-	sys_info_start(*sys_info);
+	sys_info_start(sys_info);
 	return 0;
 }
 

@@ -37,17 +37,6 @@ struct sys_cpu_s {
 };
 
 
-typedef struct sys_net_s sys_net_t;
-
-struct sys_net_s {
-	char mac[64];
-	char local_ipv4[64];
-	char local_ipv6[64];
-	char extern_ipv4[64];
-	char extern_ipv6[64];
-};
-
-
 typedef struct sys_info_s sys_info_t;
 
 struct sys_info_s {
@@ -56,7 +45,7 @@ struct sys_info_s {
 };
 
 sys_info_t *new_sys_info();
-int demo(sys_info_t **sys_info);
+int sys_demo(sys_info_t *sys_info);
 int sys_info_start(sys_info_t *sys_info);
 
 #endif
