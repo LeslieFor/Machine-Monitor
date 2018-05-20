@@ -6,11 +6,10 @@
 typedef struct sys_net_s sys_net_t;
 
 struct sys_net_s {
+    char ip[64];
 	char mac[64];
-	char local_ipv4[64];
-	char local_ipv6[64];
-	char extern_ipv4[64];
-	char extern_ipv6[64];
+    char name[64];
+    sys_net_t *next;
 };
 
 
@@ -34,10 +33,7 @@ typedef struct AF_filter_s AF_filter_t;
 
 struct AF_filter_s {
     ifreq_handler_p handler;
-    int  type;
-    char ip[64];
-    char mac[64];
-    char name[64];
+    sys_net_t *head;
 };
 
 sys_net_ctx_t *new_net_ctx(int type);

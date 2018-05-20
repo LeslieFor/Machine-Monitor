@@ -12,7 +12,7 @@
 
 #include "system_net.h"
 
-AF_filter_t *new_AF_filter(int);
+AF_filter_t *new_AF_filter();
 int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifq);
 
 sys_net_ctx_t *new_net_ctx(int type)
@@ -26,13 +26,13 @@ sys_net_ctx_t *new_net_ctx(int type)
         return NULL;
     }
 
-    net_ctx->handle = (ifreq_handler_t *) new_AF_filter(0);
+    net_ctx->handle = (ifreq_handler_t *) new_AF_filter();
 
     return net_ctx;
 }
 
 
-AF_filter_t *new_AF_filter(int AF_type)
+AF_filter_t *new_AF_filter()
 {
     AF_filter_t *af_flt = NULL;
     af_flt = (AF_filter_t *) malloc(sizeof(*af_flt));
@@ -42,28 +42,27 @@ AF_filter_t *new_AF_filter(int AF_type)
         return NULL;
     }
 
-    af_flt->type    = AF_type;
     af_flt->handler = &af_filter_handler;
-    strcpy(af_flt->name, "eth0");
 
     return af_flt;
 }
 
 int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
 {
+    printf("start\n");
     int sockfd;
     struct ifreq   ifr;
-    AF_filter_t   *af_flt  = NULL;
-    unsigned char  mac[6]  = {0x00};
+    sys_net_t     *temp   = NULL;
+    AF_filter_t   *af_flt = NULL;
+    unsigned char  mac[6] = {0x00};
 
     af_flt = (AF_filter_t *)hand;
 
-    printf("type: %d \t interface: %s\n", af_flt->type, ifrq->ifr_name);
-
-    if (strcmp(af_flt->name, ifrq->ifr_name) != 0)
+    temp = (sys_net_t *) malloc(sizeof(*temp));
+    if (temp == NULL)
     {
-        printf("not\n");
-        //return 1;
+        printf("malloc sys_net_t error\n");
+        return -1;
     }
 
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
@@ -74,28 +73,18 @@ int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
 
     strcpy(ifr.ifr_name, ifrq->ifr_name);
 
-    if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) < 0)
-    {
-        printf("ioctl SIOCGIFFLAGS error:%d\n", errno);
-        close(sockfd);
-        return -1;
-    }
-
-/*
-    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0)
-    {
-        printf("ioctl SIOCGIFADDR error:%d\n", errno);
-        close(sockfd);
-        return -1;
-    }
-*/
-
-    if (inet_ntop(AF_INET, &ifrq->ifr_addr, af_flt->ip, sizeof(af_flt->ip)) == NULL)
+    /*
+     * Get Net Interface IP Address
+     * Only support IPv4
+     */
+    if (inet_ntop(AF_INET, &((struct sockaddr_in *)&(ifrq->ifr_addr))->sin_addr, temp->ip, sizeof(temp->ip)) == NULL)
     {
         printf("inet_ntop error: %d\n", errno);
     }
-    printf("ip: %s\n", af_flt->ip);
 
+    /*
+     * Get Net Interface Mac Address
+     */
     if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0)
     {
         printf("ioctl SIOCGIFHWADDR error:%d\n", errno);
@@ -104,9 +93,14 @@ int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
     }
 
     memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
-    sprintf(af_flt->mac, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    sprintf(temp->mac, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-    printf("MAC: %s\n", af_flt->mac);
+    /*add temp to list*/
+    temp->next   = af_flt->head;
+    af_flt->head = temp;
+
+    printf("NAME: %s\tIP:%s\t MAC:%s\n", temp->name, temp->ip, temp->mac);
+
     return 0;
 }
 
@@ -135,7 +129,7 @@ int get_net_info(sys_net_ctx_t *net_ctx)
     /* i for escape loop forever */
     for ( i = 0; i < 50; i++)
     {
-        printf("for top len: %d\n", len);
+        printf("loop len :%d\n", len);
         buf = malloc(len);
         if (buf == NULL)
         {
