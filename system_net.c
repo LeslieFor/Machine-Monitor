@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -42,15 +44,69 @@ AF_filter_t *new_AF_filter(int AF_type)
 
     af_flt->type    = AF_type;
     af_flt->handler = &af_filter_handler;
+    strcpy(af_flt->name, "eth0");
 
     return af_flt;
 }
 
-int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifq)
+int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
 {
-    AF_filter_t *af_flt = (AF_filter_t *)hand;
-    printf("type: %d \t interface: %s\n", af_flt->type, ifq->ifr_name);
+    int sockfd;
+    struct ifreq   ifr;
+    AF_filter_t   *af_flt  = NULL;
+    unsigned char  mac[6]  = {0x00};
 
+    af_flt = (AF_filter_t *)hand;
+
+    printf("type: %d \t interface: %s\n", af_flt->type, ifrq->ifr_name);
+
+    if (strcmp(af_flt->name, ifrq->ifr_name) != 0)
+    {
+        printf("not\n");
+        //return 1;
+    }
+
+    sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sockfd < 0)
+    {
+        printf("sockfd error\n");
+    }
+
+    strcpy(ifr.ifr_name, ifrq->ifr_name);
+
+    if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) < 0)
+    {
+        printf("ioctl SIOCGIFFLAGS error:%d\n", errno);
+        close(sockfd);
+        return -1;
+    }
+
+/*
+    if (ioctl(sockfd, SIOCGIFADDR, &ifr) < 0)
+    {
+        printf("ioctl SIOCGIFADDR error:%d\n", errno);
+        close(sockfd);
+        return -1;
+    }
+*/
+
+    if (inet_ntop(AF_INET, &ifrq->ifr_addr, af_flt->ip, sizeof(af_flt->ip)) == NULL)
+    {
+        printf("inet_ntop error: %d\n", errno);
+    }
+    printf("ip: %s\n", af_flt->ip);
+
+    if (ioctl(sockfd, SIOCGIFHWADDR, &ifr) < 0)
+    {
+        printf("ioctl SIOCGIFHWADDR error:%d\n", errno);
+        close(sockfd);
+        return -1;
+    }
+
+    memcpy(mac, ifr.ifr_hwaddr.sa_data, 6);
+    sprintf(af_flt->mac, "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+    printf("MAC: %s\n", af_flt->mac);
     return 0;
 }
 
@@ -63,7 +119,6 @@ int get_net_info(sys_net_ctx_t *net_ctx)
     char *buf    = NULL;
 
     struct ifconf  ifc;
-    struct ifreq  *ifr   = NULL;
     struct ifreq  *end   = NULL;
     struct ifreq  *start = NULL;
     
@@ -96,6 +151,7 @@ int get_net_info(sys_net_ctx_t *net_ctx)
             {
                 printf("ioctl SIOCGIFCONF error: %d\n", errno);
                 free(buf);
+                close(sockfd);
                 return -1;
             }
         }
@@ -116,10 +172,13 @@ int get_net_info(sys_net_ctx_t *net_ctx)
         free(buf);
     }
 
+    close(sockfd);
+
     if (i == 10)
     {
         return -1;
     }
+
     start = ifc.ifc_req;
     end   = ifc.ifc_req + (ifc.ifc_len / sizeof(struct ifreq));
 
