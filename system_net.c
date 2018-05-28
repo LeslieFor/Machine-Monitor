@@ -15,6 +15,24 @@
 AF_filter_t *new_AF_filter();
 int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifq);
 
+sys_net_t *get_net_list()
+{
+    sys_net_t     *net_list = NULL;
+    AF_filter_t   *af_flt   = NULL;
+    sys_net_ctx_t *net_ctx  = NULL;
+
+    net_ctx = new_net_ctx(0);
+    get_net_info(net_ctx);
+
+    af_flt = (AF_filter_t *)net_ctx->handle;
+    net_list = af_flt->head;
+
+    free(net_ctx);
+    free(af_flt);
+
+    return net_list;
+}
+
 sys_net_ctx_t *new_net_ctx(int type)
 {
     sys_net_ctx_t *net_ctx = NULL;
@@ -49,7 +67,7 @@ AF_filter_t *new_AF_filter()
 
 int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
 {
-    printf("start\n");
+    /* printf("start\n"); */
     int sockfd;
     struct ifreq   ifr;
     sys_net_t     *temp   = NULL;
@@ -99,7 +117,7 @@ int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
     temp->next   = af_flt->head;
     af_flt->head = temp;
 
-    printf("NAME: %s\tIP:%s\t MAC:%s\n", temp->name, temp->ip, temp->mac);
+    /* printf("NAME: %s\tIP:%s\t MAC:%s\n", temp->name, temp->ip, temp->mac); */
 
     return 0;
 }
@@ -129,7 +147,7 @@ int get_net_info(sys_net_ctx_t *net_ctx)
     /* i for escape loop forever */
     for ( i = 0; i < 50; i++)
     {
-        printf("loop len :%d\n", len);
+        /* printf("loop len :%d\n", len); */
         buf = malloc(len);
         if (buf == NULL)
         {
@@ -138,6 +156,7 @@ int get_net_info(sys_net_ctx_t *net_ctx)
         }
 
         ifc.ifc_buf = buf;
+        ifc.ifc_len = len;
 
         if (ioctl(sockfd, SIOCGIFCONF, &ifc) < 0)
         {

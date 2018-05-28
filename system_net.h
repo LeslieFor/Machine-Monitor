@@ -36,6 +36,7 @@ struct AF_filter_s {
     sys_net_t *head;
 };
 
+sys_net_t     *get_net_list();
 sys_net_ctx_t *new_net_ctx(int type);
 int get_net_info(sys_net_ctx_t *net_ctx);
 
