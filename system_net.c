@@ -59,6 +59,7 @@ AF_filter_t *new_AF_filter()
         printf("malloc AF_filter error\n");
         return NULL;
     }
+    memset(af_flt, 0x00, sizeof(*af_flt));
 
     af_flt->handler = &af_filter_handler;
 
@@ -67,7 +68,7 @@ AF_filter_t *new_AF_filter()
 
 int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
 {
-    /* printf("start\n"); */
+    //printf("\n===== start =====\n");
     int sockfd;
     struct ifreq   ifr;
     sys_net_t     *temp   = NULL;
@@ -82,6 +83,7 @@ int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
         printf("malloc sys_net_t error\n");
         return -1;
     }
+    memset(temp, 0x00, sizeof(sizeof(*temp)));
 
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
     if (sockfd < 0)
