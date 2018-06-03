@@ -92,6 +92,7 @@ int af_filter_handler(ifreq_handler_t *hand, struct ifreq *ifrq)
     }
 
     strcpy(ifr.ifr_name, ifrq->ifr_name);
+    strcpy(temp->name, ifr.ifr_name);
 
     /*
      * Get Net Interface IP Address
