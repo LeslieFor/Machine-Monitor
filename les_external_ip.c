@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "les_curl.h"
+#include "../les_curl.h"
+#include "../les_json.h"
 #include "les_external_ip.h"
 
 int les_get_external_ip(char *value)
@@ -24,14 +25,13 @@ int les_get_external_ip(char *value)
         {
             continue;
         }
+
         printf("temp: %s\n", temp);
 
-        /*
-        if (pear_json_get_string(temp, "ip", value) > 0)
+        if (les_json_get_string(temp, "ip", value) > 0)
         {
-            return;
+            return 0;
         }
-        */
     }
 
     return -1;
