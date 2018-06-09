@@ -10,7 +10,7 @@
 #include "les_nat_check.h"
 
 #define LES_CHECK_PORT 12304
-#define LES_CHECK_WAIT_SEC 3
+#define LES_CHECK_WAIT_SEC 1
 
 static int les_check_connect(char *extern_ip)
 {
