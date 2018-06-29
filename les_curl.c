@@ -165,6 +165,7 @@ static long les_curl_cmd_raw(char *method, char *url, char *header[], char *body
     curl_easy_setopt(curl_handle, CURLOPT_NOBODY, 0L);
     curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, timeout);
     curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0);
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, LES_USERAGENT);
 
     /* Easy Perform */
